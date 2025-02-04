@@ -5,6 +5,13 @@
         <GlobalHeader />
       </a-layout-header>
 
+      <a-layout>
+
+        <a-layout-content class="content">
+          <router-view />
+        </a-layout-content>
+      </a-layout>
+
       <a-layout-footer class="footer">
         <a href="https://github.com/wlpar305" target="_blank"> develop by wlc </a>
       </a-layout-footer>
@@ -14,7 +21,7 @@
 
 <script setup lang="ts">
 import GlobalHeader from '@/components/GlobalHeader.vue'
-
+//import GlobalSider from "@/components/GlobalSider.vue";
 </script>
 
 <style scoped>
