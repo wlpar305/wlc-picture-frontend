@@ -18,15 +18,11 @@
             list-type="picture-card"
             :show-upload-list="false"
             :before-upload="beforeUpload"
+            :custom-request="handleUpload"
           >
-            <img
-              v-if="formState.userAvatar"
-              :src="formState.userAvatar"
-              alt="avatar"
-              style="width: 100%"
-            />
+            <img v-if="formState.userAvatar" :src="formState.userAvatar" alt="avatar" style="width: 100%" />
             <div v-else>
-              <plus-outlined />
+              <PlusOutlined />
               <div class="ant-upload-text">上传头像</div>
             </div>
           </a-upload>
@@ -59,11 +55,12 @@
 </template>
 
 <script lang="ts" setup>
-import { message } from 'ant-design-vue';
+import { message, type UploadProps } from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue';
 import { reactive, ref, onMounted } from 'vue';
 import { useLoginUserStore } from '@/stores/useLoginUserStore';
-import { getUserByIdUsingGet, updateUserUsingPost } from '@/api/userController'; // 请确保这些API存在
+import { getUserByIdUsingGet, updateUserUsingPost } from '@/api/userController';
+import { uploadPictureUsingPost } from '@/api/pictureController.ts' // 请确保这些API存在
 
 const loginUserStore = useLoginUserStore();
 const fileList = ref([]);
@@ -97,15 +94,42 @@ const fetchUserInfo = async () => {
   }
 };
 
-// 头像上传处理
-const beforeUpload = (file: File) => {
-  const reader = new FileReader();
-  reader.readAsDataURL(file);
-  reader.onload = () => {
-    formState.userAvatar = reader.result as string;
-  };
-  return false; // 阻止默认上传
-};
+interface Props {
+  picture?: API.PictureVO
+  onSuccess?: (newPicture: API.PictureVO) => void
+}
+
+const props = defineProps<Props>()
+const loading = ref<boolean>(false)
+const handleUpload = async ({ file }: any) => {
+  loading.value = true
+  try {
+    const params = props.picture ? { id: props.picture.id } : {};
+    const res = await uploadPictureUsingPost(params, {}, file)
+    if (res.data.code === 0 && res.data.data) {
+      formState.userAvatar = res.data.data.url;
+      message.success('图片上传成功')
+      props.onSuccess?.(res.data.data)
+    } else {
+      message.error('图片上传失败，' + res.data.message)
+    }
+  } catch (error) {
+    message.error('图片上传失败')
+  } finally {
+    loading.value = false
+  }
+}
+const beforeUpload = (file: UploadProps['fileList'][number]) => {
+  const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png'
+  if (!isJpgOrPng) {
+    message.error('不支持上传该格式的图片，推荐 jpg 或 png')
+  }
+  const isLt2M = file.size / 1024 / 1024 < 2
+  if (!isLt2M) {
+    message.error('不能上传超过 2M 的图片')
+  }
+  return isJpgOrPng && isLt2M
+}
 
 // 提交表单
 const onSubmit = async () => {
