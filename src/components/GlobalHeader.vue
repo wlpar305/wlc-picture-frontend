@@ -31,9 +31,9 @@
               <template #overlay>
                 <a-menu>
                   <a-menu-item>
-                    <router-link to="/my_space">
+                    <router-link to="/my_detail">
                       <UserOutlined />
-                      我的空间
+                      修改个人信息
                     </router-link>
                   </a-menu-item>
                   <a-menu-item @click="doLogout">

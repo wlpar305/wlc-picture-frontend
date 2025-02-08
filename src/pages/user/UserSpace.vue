@@ -69,14 +69,13 @@ interface FormState {
   id?: number;
   userName: string;
   userAvatar: string;
-  email: string;
   userProfile: string;
 }
 
 const formState = reactive<FormState>({
+  id:'',
   userName: '',
   userAvatar: '',
-  email: '',
   userProfile: ''
 });
 
@@ -134,6 +133,7 @@ const beforeUpload = (file: UploadProps['fileList'][number]) => {
 // 提交表单
 const onSubmit = async () => {
   try {
+    formState.id = loginUserStore.loginUser.id;
     const res = await updateUserUsingPost(formState);
     if (res.data.code === 0) {
       message.success('更新成功');
