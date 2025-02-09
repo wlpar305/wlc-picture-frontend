@@ -49,6 +49,19 @@
             <a-descriptions-item label="大小">
               {{ formatSize(picture.picSize) }}
             </a-descriptions-item>
+            <a-descriptions-item label="主色调">
+              <a-space>
+                {{ picture.picColor ?? '-' }}
+                <div
+                  v-if="picture.picColor"
+                  :style="{
+                    width: '16px',
+                    height: '16px',
+                    backgroundColor: toHexColor(picture.picColor),
+                  }"
+                />
+              </a-space>
+            </a-descriptions-item>
           </a-descriptions>
 
           <a-space wrap>
@@ -59,39 +72,37 @@
               </template>
             </a-button>
 
-            <a-button v-if="canEdit" type="default" @click="doEdit">
-              编辑
-              <template #icon>
-                <EditOutlined />
-              </template>
+            <a-button :icon="h(ShareAltOutlined)" type="primary" ghost @click="doShare">
+              分享
             </a-button>
-            <a-button v-if="canEdit" danger @click="doDelete">
+            <a-button v-if="canEdit" :icon="h(EditOutlined)" type="default" @click="doEdit">
+              编辑
+            </a-button>
+            <a-button v-if="canEdit" :icon="h(DeleteOutlined)" danger @click="doDelete">
               删除
-              <template #icon>
-                <DeleteOutlined />
-              </template>
             </a-button>
           </a-space>
 
         </a-card>
       </a-col>
     </a-row>
-
+    <ShareModal ref="shareModalRef" :link="shareLink" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, h, onMounted, ref } from 'vue'
 import { deletePictureUsingPost, getPictureVoByIdUsingGet } from '@/api/pictureController.ts'
 import { message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
-import { downloadImage, formatSize } from '@/utils'
+import { downloadImage, formatSize, toHexColor } from '@/utils'
 import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
 import {
   DeleteOutlined,
   DownloadOutlined,
-  EditOutlined,
+  EditOutlined, ShareAltOutlined
 } from '@ant-design/icons-vue'
+import ShareModal from '@/components/ShareModal.vue'
 
 interface Props {
   id: string | number
@@ -159,6 +170,14 @@ const canEdit = computed(() => {
   return loginUser.id === user.id || loginUser.userRole === 'admin'
 })
 
+const shareModalRef = ref()
+const shareLink = ref<string>()
+const doShare = () => {
+  shareLink.value = `${window.location.protocol}//${window.location.host}/picture/${picture.value.id}`
+  if (shareModalRef.value) {
+    shareModalRef.value.openModal()
+  }
+}
 </script>
 
 <style scoped>

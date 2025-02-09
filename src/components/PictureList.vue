@@ -51,6 +51,8 @@ import {
 } from '@ant-design/icons-vue'
 import { deletePictureUsingPost } from '@/api/pictureController.ts'
 import { message } from 'ant-design-vue'
+import ShareModal from '@/components/ShareModal.vue'
+import { ref } from 'vue'
 
 interface Props {
   dataList?: API.PictureVO[]
@@ -107,6 +109,15 @@ const doDelete = async (picture, e) => {
   }
 }
 
+const shareModalRef = ref()
+const shareLink = ref<string>()
+const doShare = (picture, e) => {
+  e.stopPropagation()
+  shareLink.value = `${window.location.protocol}//${window.location.host}/picture/${picture.id}`
+  if (shareModalRef.value) {
+    shareModalRef.value.openModal()
+  }
+}
 </script>
 
 <style scoped></style>
