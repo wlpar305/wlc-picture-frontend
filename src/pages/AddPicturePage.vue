@@ -15,6 +15,29 @@
         </a-tab-pane>
       </a-tabs>
 
+      <div v-if="picture" class="edit-bar">
+        <a-space size="middle">
+          <a-button :icon="h(EditOutlined)" @click="doEditPicture">编辑图片</a-button>
+          <a-button type="primary" :icon="h(FullscreenOutlined)" @click="doImagePainting">
+            AI 扩图
+          </a-button>
+        </a-space>
+        <ImageCropper
+          ref="imageCropperRef"
+          :imageUrl="picture?.url"
+          :picture="picture"
+          :spaceId="spaceId"
+          :space="space"
+          :onSuccess="onCropSuccess"
+        />
+        <ImageOutPainting
+          ref="imageOutPaintingRef"
+          :picture="picture"
+          :spaceId="spaceId"
+          :onSuccess="onImageOutPaintingSuccess"
+        />
+      </div>
+
       <a-form v-if="picture"
               layout="vertical"
               :model="pictureForm"
@@ -59,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, h, onMounted, reactive, ref, watchEffect } from 'vue'
 import PictureUpload from '@/components/PictureUpload.vue'
 import { message } from 'ant-design-vue'
 import {
@@ -69,6 +92,10 @@ import {
 } from '@/api/pictureController.ts'
 import { useRoute, useRouter } from 'vue-router'
 import UrlPictureUpload from '@/components/UrlPictureUpload.vue'
+import { EditOutlined, FullscreenOutlined } from '@ant-design/icons-vue'
+import ImageCropper from '@/components/ImageCropper.vue'
+import { getSpaceVoByIdUsingGet } from '@/api/spaceController.ts'
+import ImageOutPainting from '@/components/ImageOutPainting.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -150,6 +177,43 @@ const getOldPicture = async () => {
 
 onMounted(() => {
   getOldPicture()
+})
+
+const imageCropperRef = ref()
+
+const doEditPicture = async () => {
+  imageCropperRef.value?.openModal()
+}
+
+const onCropSuccess = (newPicture: API.PictureVO) => {
+  picture.value = newPicture
+}
+
+const imageOutPaintingRef = ref()
+
+const doImagePainting = async () => {
+  imageOutPaintingRef.value?.openModal()
+}
+
+const onImageOutPaintingSuccess = (newPicture: API.PictureVO) => {
+  picture.value = newPicture
+}
+
+const space = ref<API.SpaceVO>()
+
+const fetchSpace = async () => {
+  if (spaceId.value) {
+    const res = await getSpaceVoByIdUsingGet({
+      id: spaceId.value,
+    })
+    if (res.data.code === 0 && res.data.data) {
+      space.value = res.data.data
+    }
+  }
+}
+
+watchEffect(() => {
+  fetchSpace()
 })
 
 </script>
