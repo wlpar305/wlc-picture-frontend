@@ -9,6 +9,7 @@
       </a-form-item>
       <a-form-item>
         <a-button type="primary" html-type="submit">搜索</a-button>
+        <a-button html-type="reset" @click="doClear">重置</a-button>
       </a-form-item>
     </a-form>
     <div style="margin-bottom: 16px" />
@@ -149,5 +150,13 @@ const doDelete = async (id: string) => {
   } else {
     message.error('删除失败')
   }
+}
+
+const doClear = () => {
+  Object.keys(searchParams).forEach((key) => {
+    searchParams[key] = undefined
+  })
+  dateRange.value = []
+  props.onSearch?.(searchParams)
 }
 </script>

@@ -1,16 +1,13 @@
 <template>
   <div id="pictureDetailPage">
     <a-row :gutter="[16, 16]">
-      <!-- 图片展示区 -->
+      <!-- 图片预览 -->
       <a-col :sm="24" :md="16" :xl="18">
         <a-card title="图片预览">
-          <a-image
-            style="max-height: 600px; object-fit: contain"
-            :src="picture.url"
-          />
+          <a-image :src="picture.url" style="max-height: 600px; object-fit: contain" />
         </a-card>
       </a-col>
-      <!-- 图片信息区 -->
+      <!-- 图片信息区域 -->
       <a-col :sm="24" :md="8" :xl="6">
         <a-card title="图片信息">
           <a-descriptions :column="1">
@@ -63,7 +60,7 @@
               </a-space>
             </a-descriptions-item>
           </a-descriptions>
-
+          <!-- 图片操作 -->
           <a-space wrap>
             <a-button type="primary" @click="doDownload">
               免费下载
@@ -71,18 +68,16 @@
                 <DownloadOutlined />
               </template>
             </a-button>
-
             <a-button :icon="h(ShareAltOutlined)" type="primary" ghost @click="doShare">
               分享
             </a-button>
             <a-button v-if="canEdit" :icon="h(EditOutlined)" type="default" @click="doEdit">
               编辑
             </a-button>
-            <a-button v-if="canEdit" :icon="h(DeleteOutlined)" danger @click="doDelete">
+            <a-button v-if="canDelete" :icon="h(DeleteOutlined)" danger @click="doDelete">
               删除
             </a-button>
           </a-space>
-
         </a-card>
       </a-col>
     </a-row>
@@ -94,15 +89,16 @@
 import { computed, h, onMounted, ref } from 'vue'
 import { deletePictureUsingPost, getPictureVoByIdUsingGet } from '@/api/pictureController.ts'
 import { message } from 'ant-design-vue'
-import { useRouter } from 'vue-router'
-import { downloadImage, formatSize, toHexColor } from '@/utils'
-import { useLoginUserStore } from '@/stores/useLoginUserStore.ts'
 import {
   DeleteOutlined,
   DownloadOutlined,
-  EditOutlined, ShareAltOutlined
+  EditOutlined,
+  ShareAltOutlined,
 } from '@ant-design/icons-vue'
+import { useRouter } from 'vue-router'
+import { downloadImage, formatSize, toHexColor } from '@/utils'
 import ShareModal from '@/components/ShareModal.vue'
+import { SPACE_PERMISSION_ENUM } from '@/constants/space.ts'
 
 interface Props {
   id: string | number
@@ -110,6 +106,15 @@ interface Props {
 
 const props = defineProps<Props>()
 const picture = ref<API.PictureVO>({})
+
+function createPermissionChecker(permission: string) {
+  return computed(() => {
+    return (picture.value.permissionList ?? []).includes(permission)
+  })
+}
+
+const canEdit = createPermissionChecker(SPACE_PERMISSION_ENUM.PICTURE_EDIT)
+const canDelete = createPermissionChecker(SPACE_PERMISSION_ENUM.PICTURE_DELETE)
 
 const fetchPictureDetail = async () => {
   try {
@@ -150,7 +155,6 @@ const doDelete = async () => {
   const res = await deletePictureUsingPost({ id })
   if (res.data.code === 0) {
     message.success('删除成功')
-    window.history.back();
   } else {
     message.error('删除失败')
   }
@@ -159,16 +163,6 @@ const doDelete = async () => {
 const doDownload = () => {
   downloadImage(picture.value.url)
 }
-
-const loginUserStore = useLoginUserStore()
-const canEdit = computed(() => {
-  const loginUser = loginUserStore.loginUser;
-  if (!loginUser.id) {
-    return false
-  }
-  const user = picture.value.user || {}
-  return loginUser.id === user.id || loginUser.userRole === 'admin'
-})
 
 const shareModalRef = ref()
 const shareLink = ref<string>()

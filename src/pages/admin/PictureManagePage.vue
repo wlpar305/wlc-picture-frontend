@@ -46,6 +46,7 @@
       </a-form-item>
       <a-form-item>
         <a-button type="primary" html-type="submit">搜索</a-button>
+        <a-button html-type="reset" @click="doClear">重置</a-button>
       </a-form-item>
     </a-form>
 
@@ -293,4 +294,12 @@ const getTagCategoryOptions = async () => {
 onMounted(() => {
   getTagCategoryOptions()
 })
+
+const doClear = () => {
+  Object.keys(searchParams).forEach((key) => {
+    searchParams[key] = undefined
+  })
+  dateRange.value = []
+  props.onSearch?.(searchParams)
+}
 </script>
